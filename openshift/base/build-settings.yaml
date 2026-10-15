@@ -1,0 +1,13 @@
+# UNICO punto in cui indicare la repo Git.
+# Kustomize copia questi valori in tutte le BuildConfig (vedi "replacements"
+# in kustomization.yaml). L'annotazione local-config fa sì che questa ConfigMap
+# NON venga creata nel cluster: serve solo a Kustomize.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: build-settings
+  annotations:
+    config.kubernetes.io/local-config: "true"
+data:
+  gitUri: https://github.com/TUO-UTENTE/football-openshift.git
+  gitRef: main

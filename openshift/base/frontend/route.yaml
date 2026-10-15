@@ -1,0 +1,19 @@
+# Route-frontend: unico punto d'ingresso pubblico (HTTPS).
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+  annotations:
+    # timeout lungo per tenere aperti i WebSocket durante la partita
+    haproxy.router.openshift.io/timeout: 1h
+spec:
+  to:
+    kind: Service
+    name: frontend
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

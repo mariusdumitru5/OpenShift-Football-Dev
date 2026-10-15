@@ -1,0 +1,113 @@
+# Repo-Git -> BuildConfig -> ImageStream "frontend:latest" -> Deployment-frontend
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: frontend
+spec:
+  runPolicy: Serial
+  source:
+    type: Git
+    git:
+      uri: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitUri
+      ref: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitRef
+    contextDir: frontend
+    # Per una repo privata: crea un secret e decommenta
+    # sourceSecret:
+    #   name: git-credentials
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: frontend:latest
+  triggers:
+    - type: ConfigChange        # prima build automatica alla creazione / modifica della BC
+    - type: GitHub              # build automatica a ogni push (webhook)
+      github:
+        secretReference:
+          name: webhook-secret
+    - type: Generic             # webhook generico (GitLab, Gitea, Bitbucket, curl...)
+      generic:
+        secretReference:
+          name: webhook-secret
+  resources:
+    limits:
+      memory: 1Gi
+---
+# Repo-Git -> BuildConfig -> ImageStream "auth:latest" -> Deployment-auth
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: auth
+spec:
+  runPolicy: Serial
+  source:
+    type: Git
+    git:
+      uri: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitUri
+      ref: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitRef
+    contextDir: services/auth
+    # Per una repo privata: crea un secret e decommenta
+    # sourceSecret:
+    #   name: git-credentials
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: auth:latest
+  triggers:
+    - type: ConfigChange        # prima build automatica alla creazione / modifica della BC
+    - type: GitHub              # build automatica a ogni push (webhook)
+      github:
+        secretReference:
+          name: webhook-secret
+    - type: Generic             # webhook generico (GitLab, Gitea, Bitbucket, curl...)
+      generic:
+        secretReference:
+          name: webhook-secret
+  resources:
+    limits:
+      memory: 1Gi
+---
+# Repo-Git -> BuildConfig -> ImageStream "backend:latest" -> Deployment-backend
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: backend
+spec:
+  runPolicy: Serial
+  source:
+    type: Git
+    git:
+      uri: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitUri
+      ref: PLACEHOLDER   # sostituito da Kustomize con build-settings.gitRef
+    contextDir: services/backend
+    # Per una repo privata: crea un secret e decommenta
+    # sourceSecret:
+    #   name: git-credentials
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: backend:latest
+  triggers:
+    - type: ConfigChange        # prima build automatica alla creazione / modifica della BC
+    - type: GitHub              # build automatica a ogni push (webhook)
+      github:
+        secretReference:
+          name: webhook-secret
+    - type: Generic             # webhook generico (GitLab, Gitea, Bitbucket, curl...)
+      generic:
+        secretReference:
+          name: webhook-secret
+  resources:
+    limits:
+      memory: 1Gi

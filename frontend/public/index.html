@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dal dischetto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Il campo isometrico è sempre sullo sfondo -->
+  <canvas id="pitch" aria-hidden="true"></canvas>
+
+  <!-- Accesso / registrazione -->
+  <section class="screen" id="screen-auth" hidden>
+    <div class="panel">
+      <h1 class="brand">Dal dischetto</h1>
+      <p class="lede">Rigori uno contro uno. Si tira e si para a turno: vince chi segna 5 gol per primo.</p>
+
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-login" aria-selected="true">Accedi</button>
+        <button role="tab" id="tab-register" aria-selected="false">Registrati</button>
+      </div>
+
+      <form id="form-login" class="form" autocomplete="on">
+        <label>Username<input name="username" required autocomplete="username"></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+        <button class="btn" type="submit">Accedi</button>
+      </form>
+
+      <form id="form-register" class="form" hidden>
+        <div class="row">
+          <label>Nome<input name="nome" required maxlength="50" autocomplete="given-name"></label>
+          <label>Cognome<input name="cognome" required maxlength="50" autocomplete="family-name"></label>
+        </div>
+        <label>Username<input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_.\-]+" autocomplete="username"></label>
+        <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+        <button class="btn" type="submit">Crea account</button>
+      </form>
+      <p class="msg" id="auth-msg" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- Lobby -->
+  <section class="screen" id="screen-lobby" hidden>
+    <div class="panel">
+      <p class="hello">Ciao, <strong id="lobby-name"></strong></p>
+      <button class="btn btn-big" id="btn-play">Cerca un avversario</button>
+      <h2>Classifica vittorie</h2>
+      <ol class="leaderboard" id="leaderboard"><li class="empty">Nessuna partita giocata finora.</li></ol>
+      <button class="link" id="btn-logout">Esci</button>
+    </div>
+  </section>
+
+  <!-- Partita -->
+  <section class="screen screen-game" id="screen-game" hidden>
+    <header class="scorebug" aria-live="polite">
+      <div class="team" id="team-0"><span class="chip"></span><span class="name"></span><span class="goals">0</span></div>
+      <div class="first-to">primo a <span id="goals-to-win">5</span></div>
+      <div class="team" id="team-1"><span class="goals">0</span><span class="name"></span><span class="chip"></span></div>
+    </header>
+
+    <div class="callout" id="callout" aria-live="assertive"></div>
+
+    <div class="console" id="console">
+      <p class="role" id="role-text"></p>
+      <div class="timer"><span id="timer-bar"></span></div>
+      <div class="goalpicker" id="picker" aria-label="Scegli l'angolo, visto dal tiratore">
+        <button data-dir="TL"><kbd>1</kbd>Sinistra alto</button>
+        <button data-dir="C"><kbd>3</kbd>Centro</button>
+        <button data-dir="TR"><kbd>2</kbd>Destra alto</button>
+        <button data-dir="BL"><kbd>4</kbd>Sinistra basso</button>
+        <button data-dir="BR"><kbd>5</kbd>Destra basso</button>
+      </div>
+      <p class="status" id="status-text"></p>
+    </div>
+
+    <div class="overlay" id="overlay" hidden>
+      <div class="panel">
+        <p class="overlay-title" id="overlay-title"></p>
+        <p id="overlay-text"></p>
+        <button class="btn" id="overlay-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

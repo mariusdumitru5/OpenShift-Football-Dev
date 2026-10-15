@@ -150,7 +150,8 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
+db.env
+webhook.env
 .envrc
 .venv
 env/

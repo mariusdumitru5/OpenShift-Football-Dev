@@ -1,0 +1,59 @@
+# Deployment-auth -> Pod-auth (python-app + Secret-db + ConfigMap-backend). Stateless: le sessioni sono su Redis, quindi può scalare.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  labels:
+    app: auth
+  annotations:
+    # Quando la BuildConfig pubblica una nuova immagine su auth:latest,
+    # OpenShift aggiorna questo campo e il Deployment fa rollout da solo.
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"auth:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"auth\")].image"}]
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: auth:latest          # risolto tramite ImageStream (lookupPolicy local)
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: config-backend   # ConfigMap-backend (nome con hash aggiunto da Kustomize)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-db      # Secret-db
+                  key: REDIS_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

@@ -1,0 +1,76 @@
+# StatefulSet-db -> Pod-db (redis-db + Secret-db) -> PVC -> PV
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  serviceName: db-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: redis
+          # Mirror pubblico AWS dell'immagine ufficiale Redis (evita i rate limit di Docker Hub)
+          image: public.ecr.aws/docker/library/redis:7.2-alpine
+          # Lanciamo redis-server direttamente: niente entrypoint che richiede root,
+          # quindi funziona con l'UID casuale assegnato da OpenShift.
+          command: ["redis-server"]
+          args:
+            - "--requirepass"
+            - "$(REDIS_PASSWORD)"
+            - "--dir"
+            - "/data"
+            - "--appendonly"
+            - "yes"
+            - "--save"
+            - "60 1"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-db       # Kustomize aggiunge l'hash al nome in automatico
+                  key: REDIS_PASSWORD
+          ports:
+            - name: redis
+              containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+  # PVC creata automaticamente per ogni pod (data-db-0); lo StorageClass
+  # di default del cluster crea il PV dinamicamente.
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

@@ -1,0 +1,69 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: football-penalty
+    includeSelectors: false
+
+resources:
+  - build-settings.yaml          # solo per Kustomize, non viene creato nel cluster
+  # Build: Repo-Git -> BuildConfig -> ImageStream
+  - builds/imagestreams.yaml
+  - builds/buildconfigs.yaml
+  # Database: StatefulSet-db + Service-headless (+ PVC dal volumeClaimTemplate)
+  - db/service-headless.yaml
+  - db/statefulset.yaml
+  # Auth
+  - auth/deployment.yaml
+  - auth/service.yaml
+  # Backend di gioco
+  - backend/deployment.yaml
+  - backend/service.yaml
+  # Frontend
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - frontend/route.yaml
+
+# --- ConfigMap generate da file della repo -----------------------------------
+# Kustomize aggiunge al nome un hash del contenuto (es. config-backend-7h2k9m)
+# e aggiorna i riferimenti nei Deployment: ogni modifica ai file => nuovo hash
+# => il pod template cambia => rollout automatico con la nuova configurazione.
+configMapGenerator:
+  - name: config-backend         # ConfigMap-backend (auth + backend)
+    envs:
+      - config/backend.env
+  - name: config-frontend        # ConfigMap-frontend (nginx)
+    files:
+      - default.conf=config/frontend/default.conf
+
+secretGenerator:
+  - name: secret-db              # Secret-db (Redis, auth, backend)
+    envs:
+      - config/db.env
+  - name: webhook-secret         # usato dai trigger webhook delle BuildConfig
+    envs:
+      - config/webhook.env
+    options:
+      disableNameSuffixHash: true   # le BuildConfig lo cercano per nome fisso
+
+# --- Repo Git scritta una volta sola e propagata a tutte le BuildConfig -------
+replacements:
+  - source:
+      kind: ConfigMap
+      name: build-settings
+      fieldPath: data.gitUri
+    targets:
+      - select:
+          kind: BuildConfig
+        fieldPaths:
+          - spec.source.git.uri
+  - source:
+      kind: ConfigMap
+      name: build-settings
+      fieldPath: data.gitRef
+    targets:
+      - select:
+          kind: BuildConfig
+        fieldPaths:
+          - spec.source.git.ref

@@ -1,0 +1,16 @@
+# Service-headless: nessun ClusterIP, il DNS punta direttamente al pod
+# (db-0.db-headless). È il Service richiesto dalla StatefulSet.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-headless
+  labels:
+    app: db
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
